@@ -151,7 +151,7 @@ inline cudaError_t BatchDecodeWithPagedKVCacheWorkEstimationDispatched(
     bool& split_kv, uint32_t& max_grid_size, uint32_t& max_num_pages_per_batch,
     uint32_t& new_batch_size, uint32_t& gdy, uint32_t batch_size,
     typename Params::IdType* kv_indptr_h, const uint32_t num_qo_heads, const uint32_t page_size,
-    bool enable_cuda_graph, cudaStream_t stream, bool enforce_no_split_kv = false) {
+    bool enable_cuda_graph, cudaStream_t stream) {
   using DTypeKV = typename Params::DTypeKV;
   using IdType = typename Params::IdType;
   constexpr uint32_t vec_size = std::max(16UL / sizeof(DTypeKV), HEAD_DIM / 32UL);
@@ -172,7 +172,7 @@ inline cudaError_t BatchDecodeWithPagedKVCacheWorkEstimationDispatched(
     auto kernel =
         BatchDecodeWithPagedKVCacheKernel<POS_ENCODING_MODE, NUM_STAGES_SMEM, tile_size_per_bdx,
                                           vec_size, bdx, bdy, bdz, AttentionVariant, Params>;
-    int num_blocks_per_sm = enforce_no_split_kv ? 0 : 8;
+    int num_blocks_per_sm = 8;
     int num_sm = 0;
     int dev_id = 0;
     FLASHINFER_CUDA_CALL(cudaGetDevice(&dev_id));
@@ -428,8 +428,8 @@ inline cudaError_t DecodePlan(void* float_buffer, size_t float_workspace_size_in
                               size_t int_workspace_size_in_bytes, DecodePlanInfo& plan_info,
                               typename Params::IdType* indptr_h, uint32_t batch_size,
                               uint32_t num_qo_heads, uint32_t page_size, bool enable_cuda_graph,
-                              cudaStream_t stream, WorkEstimationFunc work_estimation_func,
-                              bool enforce_no_split_kv = false) {
+                              cudaStream_t stream, WorkEstimationFunc work_estimation_func
+                              ) {
   using DTypeO = typename Params::DTypeO;
   using IdType = typename Params::IdType;
   bool split_kv;
@@ -437,7 +437,7 @@ inline cudaError_t DecodePlan(void* float_buffer, size_t float_workspace_size_in
 
   FLASHINFER_CUDA_CALL(work_estimation_func(split_kv, max_grid_size, kv_chunk_size_in_pages,
                                             new_batch_size, gdy, batch_size, indptr_h, num_qo_heads,
-                                            page_size, enable_cuda_graph, stream, enforce_no_split_kv));
+                                            page_size, enable_cuda_graph, stream));
   size_t padded_batch_size;
   plan_info.enable_cuda_graph = enable_cuda_graph;
   plan_info.split_kv = split_kv;
