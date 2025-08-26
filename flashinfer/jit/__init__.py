@@ -70,6 +70,9 @@ from .core import sm90a_nvcc_flags as sm90a_nvcc_flags
 from .core import sm100a_nvcc_flags as sm100a_nvcc_flags
 from .cubin_loader import setup_cubin_loader
 
+from .gemm import gen_grouped_gemm_fp8_tvm_binding as gen_grouped_gemm_fp8_tvm_binding
+from .gemm import get_grouped_gemm_fp8_uri as get_grouped_gemm_fp8_uri
+
 
 @functools.cache
 def get_cudnn_fmha_gen_module():
